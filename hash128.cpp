@@ -1,6 +1,6 @@
 #include "hash128.h"
 
-#include "endianreader.h"
+#include "bundlereader.h"
 
 int VRCE::Classes::Misc::Hash128::ToSerializedVersion(VRCE::Version version)
 {
@@ -37,7 +37,7 @@ VRCE::Classes::Misc::Hash128::Hash128(std::uint32_t v0, std::uint32_t v1, std::u
 {
 }
 
-void VRCE::Classes::Misc::Hash128::read(VRCE::IBinaryReader& reader)
+void VRCE::Classes::Misc::Hash128::read(VRCE::BundleFiles::BundleReader& reader)
 {
     m_data0 = reader.read32u();
     m_data1 = reader.read32u();

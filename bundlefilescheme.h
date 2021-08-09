@@ -2,6 +2,7 @@
 #define BUNDLEFILESCHEME_H
 
 #include "bundleheader.h"
+#include "bundlemetadata.h"
 
 #include "fileschemelist.h"
 
@@ -15,16 +16,17 @@ public:
     static BundleFileScheme ReadScheme(std::filesystem::path filePath);
 
 private:
-    void readScheme(std::istream& stream);
-    void readHeader(std::istream& stream);
+    void readScheme(VRCE::BinaryReader& reader);
+    void readHeader(VRCE::BinaryReader& reader);
 
-    void readRawWebMetaData(std::istream& stream, std::vector<char>& dataBuf, std::int64_t& metadataOffset);
-    void readFileStreamMetaData(std::istream& stream, std::int64_t basePosition);
-    void readMetaData(std::istream& stream, std::int32_t metadataSize);
-    void readRawWebData(std::istream& stream, std::int64_t metadataOffset);
-    void readFileStreamData(std::istream& stream, std::int64_t basePosition, std::int64_t headerSize);
+    void readRawWebMetaData(VRCE::BinaryReader& reader, std::shared_ptr<std::vector<std::uint8_t>>& dataBuf, std::int64_t& metadataOffset);
+    void readFileStreamMetaData(VRCE::BinaryReader& reader, std::int64_t basePosition);
+    void readMetaData(VRCE::BinaryReader& reader, std::int32_t metadataSize);
+    void readRawWebData(VRCE::BinaryReader& reader, std::int64_t metadataOffset);
+    void readFileStreamData(VRCE::BinaryReader& reader, std::int64_t basePosition, std::int64_t headerSize);
 
     BundleFiles::BundleHeader m_header;
+    BundleFiles::BundleMetaData m_metadata;
 };
 }
 

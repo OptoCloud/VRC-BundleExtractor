@@ -29,9 +29,9 @@ VRCE::BundleFiles::BundleRawWebHeader::BundleRawWebHeader()
 {
 }
 
-void VRCE::BundleFiles::BundleRawWebHeader::read(VRCE::IBinaryReader& reader)
+void VRCE::BundleFiles::BundleRawWebHeader::read(VRCE::BundleFiles::BundleReader& reader, VRCE::BundleFiles::BundleVersion generation)
 {
-    if (HasHash(m_version)) {
+    if (HasHash(generation)) {
         m_hash.read(reader);
         m_crc = reader.read32u();
     }
@@ -39,14 +39,14 @@ void VRCE::BundleFiles::BundleRawWebHeader::read(VRCE::IBinaryReader& reader)
     m_minimumStreamedBytes = reader.read32u();
     m_headerSize = reader.read32s();
     m_numberOfScenesToDownloadBeforeStreaming = reader.read32s();
-    m_scenes = ObjectReader<BundleScene>(reader).readObjectVector();
+    m_scenes = reader.readObjectVector<BundleScene>();
 
-    if (HasCompleteFileSize(m_version))
+    if (HasCompleteFileSize(generation))
     {
         m_completeFileSize = reader.read32u();
     }
 
-    if (HasUncompressedBlocksInfoSize(m_version))
+    if (HasUncompressedBlocksInfoSize(generation))
     {
         m_uncompressedBlocksInfoSize = reader.read32s();
     }

@@ -11,13 +11,26 @@ struct BundleType
         UnityFS  = 2,
     };
 
-    BundleType() : m_value(0) {}
-    BundleType(int value) : m_value(value) {}
+    constexpr BundleType() noexcept : m_value(0) {}
+    constexpr BundleType(int value) noexcept : m_value(value) {}
 
-    inline void setValue(int value) noexcept { m_value = value; }
-    inline int value() const noexcept { return m_value; }
+    constexpr void setValue(int value) noexcept { m_value = value; }
+    constexpr int value() const noexcept { return m_value; }
 
     constexpr bool isRawWeb() const noexcept { return m_value == UnityRaw || m_value == UnityWeb; }
+
+    constexpr bool operator==(BundleType other) const noexcept {
+        return m_value == other.m_value;
+    }
+    constexpr bool operator!=(BundleType other) const noexcept {
+        return m_value != other.m_value;
+    }
+    constexpr bool operator==(BundleType::Enums other) const noexcept {
+        return m_value == other;
+    }
+    constexpr bool operator!=(BundleType::Enums other) const noexcept {
+        return m_value != other;
+    }
 private:
     int m_value;
 };

@@ -1,49 +1,80 @@
 #ifndef BINARYREADER_H
 #define BINARYREADER_H
 
-#include "ibinaryreader.h"
-#include "readerhelpers.h"
+#include "ireadsource.h"
 
+#include <filesystem>
 #include <span>
-#include <array>
+#include <memory>
 #include <vector>
 #include <istream>
-#include <cstdint>
+#include <type_traits>
 
 namespace VRCE {
-class BinaryReader : public IBinaryReader
+class FileReadSource;
+class MemoryReadSource;
+class BinaryReader
 {
 public:
-    BinaryReader(std::istream& stream);
+    BinaryReader(const std::filesystem::path& path);
+    BinaryReader(std::shared_ptr<std::vector<std::uint8_t>> data);
+    BinaryReader(const VRCE::BinaryReader& other);
+    virtual ~BinaryReader();
 
-    std::int16_t  read16s() override;
-    std::uint16_t read16u() override;
+    VRCE::IReadSource* readSource();
+    bool isValid() const;
+    std::ptrdiff_t position() const;
+    void seekBeg(std::ptrdiff_t offset);
+    void seekRel(std::ptrdiff_t offset);
 
-    std::int32_t  read32s() override;
-    std::uint32_t read32u() override;
+    char readChar();
+    bool readBool();
 
-    std::int64_t  read64s() override;
-    std::uint64_t read64u() override;
+    std::int8_t  read8s();
+    std::uint8_t read8u();
 
-    float  readFloat() override;
-    double readDouble() override;
+    virtual std::int16_t  read16s();
+    virtual std::uint16_t read16u();
 
-    std::vector<std::int16_t>  read16sVector() override;
-    std::vector<std::uint16_t> read16uVector() override;
+    virtual std::int32_t  read32s();
+    virtual std::uint32_t read32u();
 
-    std::vector<std::int32_t>  read32sVector() override;
-    std::vector<std::uint32_t> read32uVector() override;
+    virtual std::int64_t  read64s();
+    virtual std::uint64_t read64u();
 
-    std::vector<std::int64_t>  read64sVector() override;
-    std::vector<std::uint64_t> read64uVector() override;
+    virtual float  readFloat();
+    virtual double readDouble();
 
-    std::vector<float>  readFloatVector() override;
-    std::vector<double> readDoubleVector() override;
+    std::string readString();
 
-    BinaryReader(BinaryReader&) = delete;
-    BinaryReader& operator=(BinaryReader&) = delete;
-private:
+    // virtual std::vector<bool> readBoolVector() = 0;
+
+    virtual std::vector<std::int8_t>  read8sVector();
+    virtual std::vector<std::uint8_t> read8uVector();
+
+    virtual std::vector<std::int16_t>  read16sVector();
+    virtual std::vector<std::uint16_t> read16uVector();
+
+    virtual std::vector<std::int32_t>  read32sVector();
+    virtual std::vector<std::uint32_t> read32uVector();
+
+    virtual std::vector<std::int64_t>  read64sVector();
+    virtual std::vector<std::uint64_t> read64uVector();
+
+    virtual std::vector<float>  readFloatVector();
+    virtual std::vector<double> readDoubleVector();
+
+    void readInto(std::span<std::uint8_t> span);
+
+    void alignStream();
+
+    VRCE::BinaryReader& operator = (const VRCE::BinaryReader& other);
+protected:
+    VRCE::IReadSource* m_readsource;
 };
+
+template <class T>
+concept implementsBinaryReader = std::is_base_of_v<BinaryReader, T>;
 }
 
 #endif // BINARYREADER_H

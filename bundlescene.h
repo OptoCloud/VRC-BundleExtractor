@@ -7,10 +7,10 @@
 #include <cstdint>
 
 namespace VRCE::BundleFiles {
-class BundleScene : public IBundleReadable
+class BundleScene : public VRCE::BundleFiles::IBundleReadable
 {
 public:
-    void read(IBinaryReader& reader) override;
+    void read(VRCE::BundleFiles::BundleReader& reader) override;
 
     std::uint32_t compressedSize() const;
     std::uint32_t decompressedSize() const;

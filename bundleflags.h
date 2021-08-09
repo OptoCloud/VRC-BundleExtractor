@@ -17,11 +17,11 @@ struct BundleFlags
         OldWebPluginCompatibility       = 0x100,
     };
 
-    BundleFlags() : m_value(0) {}
-    BundleFlags(int value) : m_value(value) {}
+    constexpr BundleFlags() noexcept : m_value(0) {}
+    constexpr BundleFlags(int value) noexcept : m_value(value) {}
 
-    inline void setValue(int value) { m_value = value; }
-    inline int value() const { return m_value; }
+    constexpr void setValue(int value) noexcept { m_value = value; }
+    constexpr int value() const noexcept { return m_value; }
 
     constexpr CompressionType compression() const noexcept { return (CompressionType)(m_value & CompressionTypeMask); }
     constexpr bool isBlocksAndDirectoryInfoCombined() const noexcept { return (m_value & BlocksAndDirectoryInfoCombined) != 0; };

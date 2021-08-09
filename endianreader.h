@@ -2,18 +2,20 @@
 #define ENIANREADER_H
 
 #include "endiantype.h"
-#include "ibinaryreader.h"
+#include "binaryreader.h"
 
 #include <vector>
 #include <istream>
 #include <cstdint>
 
 namespace VRCE {
-class EndianReader : public IBinaryReader {
+class EndianReader : public BinaryReader {
 public:
     static EndianType ComputerEndianess() noexcept;
 
-    EndianReader(std::istream& stream, EndianType endianess);
+    EndianReader(const VRCE::BinaryReader& reader, EndianType endianess);
+
+    EndianType endianess() const noexcept;
 
     std::int16_t  read16s() override;
     std::uint16_t read16u() override;
@@ -41,9 +43,6 @@ public:
 
     std::vector<float>  readFloatVector() override;
     std::vector<double> readDoubleVector() override;
-
-    EndianReader(EndianReader&) = delete;
-    EndianReader& operator=(EndianReader&) = delete;
 private:
     bool m_differentEndianess;
 };

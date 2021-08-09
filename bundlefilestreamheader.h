@@ -8,7 +8,7 @@ namespace VRCE::BundleFiles {
 class BundleFileStreamHeader
 {
 public:
-    void read(IBinaryReader& reader);
+    void read(BinaryReader& reader);
 
     std::int64_t size() const;
     std::int32_t compressedBlocksInfoSize() const;

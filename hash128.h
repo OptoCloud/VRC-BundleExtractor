@@ -1,7 +1,6 @@
 #ifndef HASH128_H
 #define HASH128_H
 
-#include "ibinaryreader.h"
 #include "ibundlereadable.h"
 
 #include "version.h"
@@ -10,7 +9,8 @@
 #include <cstdint>
 
 namespace VRCE::Classes::Misc {
-struct Hash128 : public IBundleReadable
+
+struct Hash128 : public BundleFiles::IBundleReadable
 {
 public:
     static int ToSerializedVersion(Version version);
@@ -19,7 +19,7 @@ public:
     Hash128(std::uint32_t v);
     Hash128(std::uint32_t v0, std::uint32_t v1, std::uint32_t v2, std::uint32_t v3);
 
-    void read(IBinaryReader& reader) override;
+    void read(VRCE::BundleFiles::BundleReader& reader) override;
 
     std::uint32_t data0() const;
     std::uint32_t data1() const;
@@ -49,6 +49,7 @@ public:
     static constexpr std::string_view Bytes15Name = "bytes[15]";
     static constexpr std::string_view HashName = "Hash";
 };
+
 }
 
 #endif // HASH128_H

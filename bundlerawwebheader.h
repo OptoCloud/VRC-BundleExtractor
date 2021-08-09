@@ -1,8 +1,8 @@
 #ifndef BUNDLERAWWEBHEADER_H
 #define BUNDLERAWWEBHEADER_H
 
+#include "endianreader.h"
 #include "bundleversion.h"
-#include "ibundlereadable.h"
 #include "bundlescene.h"
 #include "hash128.h"
 
@@ -10,7 +10,7 @@
 #include <cstdint>
 
 namespace VRCE::BundleFiles {
-class BundleRawWebHeader : public IBundleReadable
+class BundleRawWebHeader
 {
 public:
     static bool HasHash(BundleVersion generation) noexcept;
@@ -19,7 +19,7 @@ public:
 
     BundleRawWebHeader();
 
-    void read(IBinaryReader& reader) override;
+    void read(VRCE::BundleFiles::BundleReader& reader, VRCE::BundleFiles::BundleVersion generation);
 
     std::int32_t headerSize() const;
     std::int32_t uncompressedBlocksInfoSize() const;

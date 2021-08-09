@@ -1,21 +1,22 @@
 #ifndef READERHELPERS_H
 #define READERHELPERS_H
 
-#include <istream>
+#include "ireadsource.h"
+#include <memory>
 #include <span>
 
 namespace VRCE::ReaderHelpers {
 template <typename T>
-inline T read_type(std::istream& stream)
+inline T read_type(VRCE::IReadSource* readsource)
 {
-    T type{};
-    stream.read((char*)&type, sizeof(T));
+    T type;
+    readsource->read((std::uint8_t*)&type, sizeof(T));
     return type;
 }
 template <typename T>
-inline void read_array(std::istream& stream, std::span<T> readInto)
+inline void read_array(VRCE::IReadSource* readsource, std::span<T> readInto)
 {
-    stream.read((char*)readInto.data(), readInto.size() * sizeof(T));
+    readsource->read((std::uint8_t*)readInto.data(), readInto.size() * sizeof(T));
 }
 }
 

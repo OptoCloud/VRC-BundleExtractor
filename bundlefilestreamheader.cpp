@@ -1,6 +1,6 @@
 #include "bundlefilestreamheader.h"
 
-void VRCE::BundleFiles::BundleFileStreamHeader::read(VRCE::IBinaryReader& reader)
+void VRCE::BundleFiles::BundleFileStreamHeader::read(VRCE::BinaryReader& reader)
 {
     m_size = reader.read64s();
     m_compressedBlocksInfoSize = reader.read32s();

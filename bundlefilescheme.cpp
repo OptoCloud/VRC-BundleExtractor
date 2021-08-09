@@ -1,5 +1,8 @@
 #include "bundlefilescheme.h"
 
+#include "filereadsource.h"
+#include "memoryreadsource.h"
+#include "bundlereader.h"
 #include "vecstreambuf.h"
 #include "endianreader.h"
 
@@ -14,53 +17,52 @@ using namespace VRCE::BundleFiles;
 
 VRCE::BundleFileScheme::BundleFileScheme(std::filesystem::path filePath)
     : FileSchemeList(filePath)
+    , m_header()
+    , m_metadata()
 {
-
 }
 
 VRCE::BundleFileScheme VRCE::BundleFileScheme::ReadScheme(std::filesystem::path filePath)
 {
     BundleFileScheme scheme(filePath);
 
-    std::ifstream file(filePath);
+    VRCE::BinaryReader reader(filePath);
 
-    if (!file.is_open()) {
+    if (!reader.isValid()) {
         throw ""; // File wont open or some shit
     }
 
-    scheme.readScheme(file);
+    scheme.readScheme(reader);
 
     return scheme;
 }
 
-void VRCE::BundleFileScheme::readScheme(std::istream& stream)
+void VRCE::BundleFileScheme::readScheme(VRCE::BinaryReader& reader)
 {
-    std::int64_t basePosition = (std::int64_t)stream.tellg();
+    std::int64_t basePosition = reader.position();
 
-    readHeader(stream);
+    readHeader(reader);
 
     switch (m_header.signature().value()) {
     case BundleType::UnityRaw:
     case BundleType::UnityWeb:
     {
-        std::vector<char> data;
+        std::shared_ptr<std::vector<std::uint8_t>> data;
 
         std::int64_t metadataOffset = 0;
 
-        readRawWebMetaData(stream, data, metadataOffset);
+        readRawWebMetaData(reader, data, metadataOffset);
 
-        VecStreamBuf<char> dataBuf(data);
-        std::istream dataStream(&dataBuf);
-
-        readRawWebData(dataStream, metadataOffset);
+        VRCE::BinaryReader dataReader(data);
+        readRawWebData(dataReader, metadataOffset);
         break;
     }
     case BundleType::UnityFS:
     {
-        std::int64_t headerSize = (std::int64_t)stream.tellg() - basePosition;
+        std::int64_t headerSize = reader.position() - basePosition;
 
-        readFileStreamMetaData(stream, basePosition);
-        readFileStreamData(stream, basePosition, headerSize);
+        readFileStreamMetaData(reader, basePosition);
+        readFileStreamData(reader, basePosition, headerSize);
         break;
     }
     default:
@@ -68,28 +70,28 @@ void VRCE::BundleFileScheme::readScheme(std::istream& stream)
     }
 }
 
-void VRCE::BundleFileScheme::readHeader(std::istream& stream)
+void VRCE::BundleFileScheme::readHeader(VRCE::BinaryReader& reader)
 {
-    std::int64_t headerPosition = (std::int64_t)stream.tellg();
+    std::int64_t headerPosition = reader.position();
 
-    VRCE::EndianReader reader(stream, VRCE::EndianType::BigEndian);
+    VRCE::BundleFiles::BundleReader bundleReader(reader, VRCE::EndianType::BigEndian);
 
-    m_header.read(reader);
+    m_header.read(bundleReader);
 
     if (m_header.signature().isRawWeb()) {
-        if ((std::int64_t)stream.tellg() -  headerPosition != m_header.rawWeb()->headerSize())
+        if (reader.position() -  headerPosition != m_header.rawWeb()->headerSize())
         {
-            throw ""; // "Read {stream.Position - headerPosition} but expected {Header.RawWeb.HeaderSize}"
+            throw ""; // "Read {reader.Position - headerPosition} but expected {Header.RawWeb.HeaderSize}"
         }
     }
 }
 
-void VRCE::BundleFileScheme::readRawWebMetaData(std::istream& stream, std::vector<char>& dataBuf, std::int64_t& metadataOffset)
+void VRCE::BundleFileScheme::readRawWebMetaData(VRCE::BinaryReader& reader, std::shared_ptr<std::vector<std::uint8_t>>& dataBuf, std::int64_t& metadataOffset)
 {
     auto header = m_header.rawWeb();
 
     std::int32_t metadataSize = 0;
-    if (BundleRawWebHeader::HasUncompressedBlocksInfoSize(header->version())) {
+    if (BundleRawWebHeader::HasUncompressedBlocksInfoSize(m_header.version())) {
         metadataSize = header->uncompressedBlocksInfoSize();
     }
 
@@ -103,52 +105,54 @@ void VRCE::BundleFileScheme::readRawWebMetaData(std::istream& stream, std::vecto
     }
 }
 
-void VRCE::BundleFileScheme::readFileStreamMetaData(std::istream& stream, std::int64_t basePosition)
+void VRCE::BundleFileScheme::readFileStreamMetaData(VRCE::BinaryReader& reader, std::int64_t basePosition)
 {
     auto header = m_header.fileStream();
 
     if (header->flags().isBlocksInfoAtTheEnd())
     {
-        stream.seekg(basePosition + (header->size() - header->compressedBlocksInfoSize()));
+        reader.seekBeg(basePosition + (header->size() - header->compressedBlocksInfoSize()));
     }
 
     CompressionType metaCompression = header->flags().compression();
     switch (metaCompression) {
     case CompressionType::None:
     {
-        readMetaData(stream, header->uncompressedBlocksInfoSize());
+        readMetaData(reader, header->uncompressedBlocksInfoSize());
         break;
     }
     case CompressionType::Lzma:
     {
-        std::vector<char> uncompressedData(header->uncompressedBlocksInfoSize());
-        VecStreamBuf<char> uncompressedDataBuf(uncompressedData);
-        std::istream uncompressedDataStream(&uncompressedDataBuf);
+        std::vector<std::uint8_t> compressedData(header->compressedBlocksInfoSize());
+        auto uncompressedData = std::make_shared<std::vector<std::uint8_t>>(header->uncompressedBlocksInfoSize());
 
-        std::vector<char> compressedData(header->compressedBlocksInfoSize());
-        stream.read(compressedData.data(), compressedData.size());
+        reader.readSource()->read(compressedData.data(), compressedData.size());
 
         // TODO: lzma decompression
 
+        // Parse it
+        VRCE::BinaryReader uncompressedDataReader(uncompressedData);
+        readMetaData(uncompressedDataReader, header->uncompressedBlocksInfoSize());
         break;
     }
     case CompressionType::Lz4:
     case CompressionType::Lz4HC:
     {
-        std::vector<char> uncompressedData(header->uncompressedBlocksInfoSize());
-        VecStreamBuf<char> uncompressedDataBuf(uncompressedData);
-        std::istream uncompressedDataStream(&uncompressedDataBuf);
+        std::vector<std::uint8_t> compressedData(header->compressedBlocksInfoSize());
+        auto uncompressedData = std::make_shared<std::vector<std::uint8_t>>(header->uncompressedBlocksInfoSize());
 
-        std::vector<char> compressedData(header->compressedBlocksInfoSize());
-        stream.read(compressedData.data(), compressedData.size());
+        reader.readSource()->read(compressedData.data(), compressedData.size());
 
-        int result = LZ4_decompress_safe(compressedData.data(), (char*)uncompressedData.data(), compressedData.size(), uncompressedData.size());
+        // DeCompress (TODO: loop until all is read) ((POSSIBLE BUG))
+        int result = LZ4_decompress_safe((char*)compressedData.data(), (char*)uncompressedData->data(), compressedData.size(), header->uncompressedBlocksInfoSize());
 
-        if ((std::size_t)result != uncompressedData.size()) {
+        if (result != header->uncompressedBlocksInfoSize()) {
             throw ""; // Decompression failed...
         }
 
-        readMetaData(uncompressedDataStream, uncompressedData.size());
+        // Parse it
+        VRCE::BinaryReader uncompressedDataReader(uncompressedData);
+        readMetaData(uncompressedDataReader, header->uncompressedBlocksInfoSize());
         break;
     }
     default:
@@ -156,17 +160,33 @@ void VRCE::BundleFileScheme::readFileStreamMetaData(std::istream& stream, std::i
     }
 }
 
-void VRCE::BundleFileScheme::readMetaData(std::istream& stream, std::int32_t metadataSize)
+void VRCE::BundleFileScheme::readMetaData(VRCE::BinaryReader& reader, std::int32_t metadataSize)
 {
-    std::int64_t metadataPosition = (std::int64_t)stream.tellg();
+    std::int64_t metadataPosition = reader.position();
+
+    BundleReader bundleReader(reader, EndianType::BigEndian, m_header.signature(), m_header.version(), m_header.flags());
+
+    m_metadata.read(bundleReader);
+
+    if (metadataSize > 0)
+    {
+        if (reader.position() - metadataPosition != metadataSize)
+        {
+            throw "";// new Exception($"Read {stream.Position - metadataPosition} but expected {metadataSize}");
+        }
+    }
 }
 
-void VRCE::BundleFileScheme::readRawWebData(std::istream& stream, std::int64_t metadataOffset)
+void VRCE::BundleFileScheme::readRawWebData(VRCE::BinaryReader& reader, std::int64_t metadataOffset)
 {
 
 }
 
-void VRCE::BundleFileScheme::readFileStreamData(std::istream& stream, std::int64_t basePosition, std::int64_t headerSize)
+void VRCE::BundleFileScheme::readFileStreamData(VRCE::BinaryReader& reader, std::int64_t basePosition, std::int64_t headerSize)
 {
+    if (m_header.fileStream()->flags().isBlocksInfoAtTheEnd()) {
+        reader.seekBeg(basePosition + headerSize);
+    }
 
+    BundleFileBlo
 }

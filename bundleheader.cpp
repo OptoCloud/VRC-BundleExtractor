@@ -1,5 +1,7 @@
 #include "bundleheader.h"
 
+#include "bundlereader.h"
+
 VRCE::BundleFiles::BundleType VRCE::BundleFiles::BundleHeader::ParseSignature(const std::string &signature)
 {
     if (signature == "UnityRaw") {
@@ -25,9 +27,9 @@ bool VRCE::BundleFiles::BundleHeader::TryParseSignature(const std::string &signa
     }
 }
 
-bool VRCE::BundleFiles::BundleHeader::IsBundleHeader(VRCE::IBinaryReader& reader)
+bool VRCE::BundleFiles::BundleHeader::IsBundleHeader(VRCE::BinaryReader& reader)
 {
-    auto& stream = reader.stream();
+    auto stream = reader.readSource();
 
     //auto position = stream.tellg();
 
@@ -41,6 +43,7 @@ bool VRCE::BundleFiles::BundleHeader::IsBundleHeader(VRCE::IBinaryReader& reader
 
 VRCE::BundleFiles::BundleHeader::BundleHeader()
     : m_signature()
+    , m_version()
     , m_unityWebBundleVersion()
     , m_unityWebMinimumRevision()
     , m_rawWeb(nullptr)
@@ -50,6 +53,7 @@ VRCE::BundleFiles::BundleHeader::BundleHeader()
 
 VRCE::BundleFiles::BundleHeader::BundleHeader(const VRCE::BundleFiles::BundleHeader& other)
     : m_signature(other.m_signature)
+    , m_version(other.m_version)
     , m_unityWebBundleVersion(other.m_unityWebBundleVersion)
     , m_unityWebMinimumRevision(other.m_unityWebMinimumRevision)
     , m_rawWeb(other.m_rawWeb)
@@ -57,7 +61,7 @@ VRCE::BundleFiles::BundleHeader::BundleHeader(const VRCE::BundleFiles::BundleHea
 {
 }
 
-void VRCE::BundleFiles::BundleHeader::read(VRCE::IBinaryReader& reader)
+void VRCE::BundleFiles::BundleHeader::read(VRCE::BundleFiles::BundleReader& reader)
 {
     std::string signature = reader.readString();
     m_signature = ParseSignature(signature);
@@ -73,8 +77,7 @@ void VRCE::BundleFiles::BundleHeader::read(VRCE::IBinaryReader& reader)
     case BundleType::UnityRaw:
     case BundleType::UnityWeb:
         m_rawWeb = std::make_shared<VRCE::BundleFiles::BundleRawWebHeader>();
-        m_rawWeb->setVersion(m_version);
-        m_rawWeb->read(reader);
+        m_rawWeb->read(reader, m_version);
         break;
     case BundleType::UnityFS:
         m_fileStream = std::make_shared<VRCE::BundleFiles::BundleFileStreamHeader>();
@@ -88,6 +91,19 @@ void VRCE::BundleFiles::BundleHeader::read(VRCE::IBinaryReader& reader)
 VRCE::BundleFiles::BundleType VRCE::BundleFiles::BundleHeader::signature() const
 {
     return m_signature;
+}
+
+VRCE::BundleFiles::BundleVersion VRCE::BundleFiles::BundleHeader::version() const
+{
+    return m_version;
+}
+
+VRCE::BundleFiles::BundleFlags VRCE::BundleFiles::BundleHeader::flags() const
+{
+    if (m_signature == BundleType::UnityFS) {
+        return m_fileStream->flags();
+    }
+    return 0;
 }
 
 std::shared_ptr<VRCE::BundleFiles::BundleRawWebHeader> VRCE::BundleFiles::BundleHeader::rawWeb()
