@@ -1,5 +1,6 @@
 #include "bundlefilescheme.h"
 
+#include "bundlefileblockreader.h"
 #include "filereadsource.h"
 #include "memoryreadsource.h"
 #include "bundlereader.h"
@@ -188,5 +189,10 @@ void VRCE::BundleFileScheme::readFileStreamData(VRCE::BinaryReader& reader, std:
         reader.seekBeg(basePosition + headerSize);
     }
 
-    BundleFileBlo
+    BundleFileBlockReader blockReader(reader, m_metadata.blocksInfo());
+
+    for (const auto& entry : m_metadata.directoryInfo().nodes()) {
+        VRCE::BinaryReader entryReader = blockReader.readEntry(entry);
+        //VRCE::FileScheme scheme = G
+    }
 }

@@ -33,7 +33,22 @@ void VRCE::BundleFiles::Node::read(VRCE::BundleFiles::BundleReader& reader)
     m_path = FilenameUtils::FixFileIndentifier(m_pathOrigin);
 }
 
-std::string_view VRCE::BundleFiles::Node::ToString()
+std::string_view VRCE::BundleFiles::Node::path() const noexcept
 {
     return m_path;
+}
+
+std::int64_t VRCE::BundleFiles::Node::offset() const noexcept
+{
+    return m_offset;
+}
+
+std::int64_t VRCE::BundleFiles::Node::size() const noexcept
+{
+    return m_size;
+}
+
+std::int32_t VRCE::BundleFiles::Node::blobIndex() const noexcept
+{
+    return m_blobIndex;
 }

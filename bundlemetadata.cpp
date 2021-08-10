@@ -26,3 +26,13 @@ void VRCE::BundleFiles::BundleMetaData::read(VRCE::BundleFiles::BundleReader& re
         reader.alignStream();
     }
 }
+
+const VRCE::BundleFiles::BlocksInfo& VRCE::BundleFiles::BundleMetaData::blocksInfo() const
+{
+    return m_blocksInfo;
+}
+
+const VRCE::BundleFiles::DirectoryInfo& VRCE::BundleFiles::BundleMetaData::directoryInfo() const
+{
+    return m_directoryInfo;
+}

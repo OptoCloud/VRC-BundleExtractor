@@ -2,9 +2,10 @@
 #define BLOCKSINFO_H
 
 #include "hash128.h"
-#include "storageblocks.h"
+#include "storageblock.h"
 #include "ibundlereadable.h"
 
+#include <span>
 #include <vector>
 
 namespace VRCE::BundleFiles {
@@ -14,9 +15,11 @@ public:
     BlocksInfo() noexcept;
 
     void read(VRCE::BundleFiles::BundleReader& reader) override;
+
+    std::span<const StorageBlock> storageBlocks() const noexcept;
 private:
     VRCE::Classes::Misc::Hash128 m_hash;
-    std::vector<StorageBlocks> m_storageblocks;
+    std::vector<StorageBlock> m_storageblocks;
 };
 }
 

@@ -129,11 +129,12 @@ set (${project}_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlefilestreamheader.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlemetadata.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/blocksinfo.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/storageblocks.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/storageblock.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/directoryinfo.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/node.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/filenameutils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlefileblockreader.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sevenziphelper.cpp
 
     ${CMAKE_CURRENT_SOURCE_DIR}/filereadsource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memoryreadsource.cpp
@@ -171,11 +172,13 @@ set (${project}_HEADERS
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlefilestreamheader.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlemetadata.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blocksinfo.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/storageblocks.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/storageblock.h
     ${CMAKE_CURRENT_SOURCE_DIR}/directoryinfo.h
     ${CMAKE_CURRENT_SOURCE_DIR}/node.h
     ${CMAKE_CURRENT_SOURCE_DIR}/filenameutils.h
     ${CMAKE_CURRENT_SOURCE_DIR}/bundlefileblockreader.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/storageblockflags.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sevenziphelper.h
 
     ${CMAKE_CURRENT_SOURCE_DIR}/ireadsource.h
     ${CMAKE_CURRENT_SOURCE_DIR}/filereadsource.h

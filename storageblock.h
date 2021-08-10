@@ -1,10 +1,11 @@
 #ifndef STORAGEBLOCKS_H
 #define STORAGEBLOCKS_H
 
+#include "storageblockflags.h"
 #include "ibundlereadable.h"
 
 namespace VRCE::BundleFiles {
-class StorageBlocks : public IBundleReadable
+class StorageBlock : public IBundleReadable
 {
 public:
     enum Flags : std::uint16_t {
@@ -13,13 +14,17 @@ public:
         Streamed			= 0x0040,
     };
 
-    StorageBlocks() noexcept;
+    StorageBlock() noexcept;
 
     void read(VRCE::BundleFiles::BundleReader& reader) override;
+
+    std::uint32_t uncompressedSize() const noexcept;
+    std::uint32_t compressedSize() const noexcept;
+    StorageBlockFlags flags() const noexcept;
 private:
     std::uint32_t m_uncompressedSize;
     std::uint32_t m_compressedSize;
-    std::uint16_t m_flags;
+    StorageBlockFlags m_flags;
 };
 }
 

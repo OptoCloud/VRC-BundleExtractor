@@ -23,9 +23,9 @@ struct BundleFlags
     constexpr void setValue(int value) noexcept { m_value = value; }
     constexpr int value() const noexcept { return m_value; }
 
-    constexpr CompressionType compression() const noexcept { return (CompressionType)(m_value & CompressionTypeMask); }
-    constexpr bool isBlocksAndDirectoryInfoCombined() const noexcept { return (m_value & BlocksAndDirectoryInfoCombined) != 0; };
-    constexpr bool isBlocksInfoAtTheEnd() const noexcept { return (m_value & BlocksInfoAtTheEnd) != 0; }
+    constexpr CompressionType compression() const noexcept { return (CompressionType)(m_value & Enums::CompressionTypeMask); }
+    constexpr bool isBlocksAndDirectoryInfoCombined() const noexcept { return (m_value & Enums::BlocksAndDirectoryInfoCombined) != 0; };
+    constexpr bool isBlocksInfoAtTheEnd() const noexcept { return (m_value & Enums::BlocksInfoAtTheEnd) != 0; }
 private:
     int m_value;
 };

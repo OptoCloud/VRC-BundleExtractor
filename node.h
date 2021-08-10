@@ -14,7 +14,10 @@ public:
 
     void read(VRCE::BundleFiles::BundleReader& reader) override;
 
-    std::string_view ToString();
+    std::string_view path() const noexcept;
+    std::int64_t offset() const noexcept;
+    std::int64_t size() const noexcept;
+    std::int32_t blobIndex() const noexcept;
 private:
     std::string m_path;
     std::string m_pathOrigin;

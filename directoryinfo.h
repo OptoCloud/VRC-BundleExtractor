@@ -5,6 +5,7 @@
 #include "ibundlereadable.h"
 #include "bundletype.h"
 
+#include <span>
 #include <vector>
 
 namespace VRCE::BundleFiles {
@@ -15,6 +16,8 @@ public:
     DirectoryInfo() noexcept;
 
     void read(BundleFiles::BundleReader &reader) override;
+
+    std::span<const BundleFiles::Node> nodes() const noexcept;
 private:
     std::vector<BundleFiles::Node> m_nodes;
 };
