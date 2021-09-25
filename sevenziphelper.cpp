@@ -5,12 +5,11 @@
 #include <mutex>
 #include <array>
 #include <thread>
-#include <memory>
 #include <unordered_map>
 
 std::mutex l_threadCache{};
 std::unordered_map<std::thread::id, std::shared_ptr<std::vector<std::uint8_t>>> s_threadCache;
-std::shared_ptr<std::vector<std::uint8_t>> GetBuffer()
+inline std::shared_ptr<std::vector<std::uint8_t>> GetBuffer()
 {
     std::thread::id threadId = std::this_thread::get_id();
 
@@ -35,6 +34,7 @@ bool VRCE::SevenZipHelper::DecompressLZMA(std::span<const std::uint8_t> compress
     lzma_ret rv = lzma_stream_decoder(&lzmaStream, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK | LZMA_CONCATENATED);
 
     if (rv != LZMA_OK) {
+        lzma_end(&lzmaStream);
         return false;
     }
 
@@ -51,6 +51,7 @@ bool VRCE::SevenZipHelper::DecompressLZMA(std::span<const std::uint8_t> compress
         rv = lzma_code(&lzmaStream, LZMA_FINISH);
 
         if (rv != LZMA_OK) {
+            lzma_end(&lzmaStream);
             return false;
         }
 
@@ -58,6 +59,8 @@ bool VRCE::SevenZipHelper::DecompressLZMA(std::span<const std::uint8_t> compress
         dataIt += written;
         sizeLeft -= written;
     } while (sizeLeft != 0);
+
+    lzma_code(&lzmaStream, LZMA_FINISH);
 
     lzma_end(&lzmaStream);
 
@@ -67,27 +70,51 @@ bool VRCE::SevenZipHelper::DecompressLZMA(std::span<const std::uint8_t> compress
 // TODO: FIXME, not fully integrated
 bool VRCE::SevenZipHelper::DecompressLZMA(VRCE::BinaryReader& reader, std::size_t compressedSize, std::span<std::uint8_t> decompressedData)
 {
-    lzma_ret rv;
-    lzma_block lzBlock;
-    std::array<std::uint8_t, 5> header;
+    lzma_stream lzmaStream = LZMA_STREAM_INIT;
 
-    reader.readInto(header);
-
-    lzBlock.header_size = header.size();
-
-    rv = lzma_block_header_decode(&lzBlock, nullptr, header.data());
+    lzma_ret rv = lzma_stream_decoder(&lzmaStream, UINT64_MAX, LZMA_TELL_UNSUPPORTED_CHECK);
 
     if (rv != LZMA_OK) {
+        lzma_end(&lzmaStream);
         return false;
     }
 
-    auto buffer = GetBuffer();
-    buffer->resize(compressedSize - header.size());
-    reader.readInto(*buffer);
+    auto& buffer = *GetBuffer();
 
-    std::size_t posIn = 0;
-    std::size_t posOut = 0;
-    rv = lzma_block_buffer_decode(&lzBlock, nullptr, buffer->data(), &posIn, buffer->size(), decompressedData.data(), &posOut, decompressedData.size());
+    std::uint8_t* decompressedIt = decompressedData.data();
+    std::size_t decompressedLeft = decompressedData.size();
 
-    return rv == LZMA_OK;
+    lzmaStream.next_in = nullptr;
+    lzmaStream.avail_in = 0;
+    lzmaStream.next_out = decompressedIt;
+    lzmaStream.avail_out = decompressedLeft;
+
+    lzma_action action = LZMA_RUN;
+
+    while (true) {
+        if (lzmaStream.avail_in == 0) {
+            buffer.resize(std::min((std::size_t)BUFSIZ, compressedSize));
+            reader.readInto(buffer);
+
+            lzmaStream.next_in = buffer.data();
+            lzmaStream.avail_in = buffer.size();
+
+            if (buffer.size() != BUFSIZ) {
+                action = LZMA_FINISH;
+            }
+        }
+
+        rv = lzma_code(&lzmaStream, action);
+
+        if (lzmaStream.avail_out == 0 || rv == LZMA_STREAM_END) {
+            std::size_t writeSize = decompressedLeft - lzmaStream.avail_out;
+            decompressedIt += writeSize;
+            decompressedLeft -= writeSize;
+        }
+
+        if (rv != LZMA_OK) {
+            return rv == LZMA_STREAM_END;
+        }
+
+    };
 }

@@ -127,7 +127,7 @@ void VRCE::BundleFileScheme::readFileStreamMetaData(VRCE::BinaryReader& reader, 
         std::vector<std::uint8_t> compressedData(header->compressedBlocksInfoSize());
         auto uncompressedData = std::make_shared<std::vector<std::uint8_t>>(header->uncompressedBlocksInfoSize());
 
-        reader.readSource()->read(compressedData.data(), compressedData.size());
+        reader.readInto(compressedData);
 
         // TODO: lzma decompression
 
@@ -142,7 +142,7 @@ void VRCE::BundleFileScheme::readFileStreamMetaData(VRCE::BinaryReader& reader, 
         std::vector<std::uint8_t> compressedData(header->compressedBlocksInfoSize());
         auto uncompressedData = std::make_shared<std::vector<std::uint8_t>>(header->uncompressedBlocksInfoSize());
 
-        reader.readSource()->read(compressedData.data(), compressedData.size());
+        reader.readInto(compressedData);
 
         // DeCompress (TODO: loop until all is read) ((POSSIBLE BUG))
         int result = LZ4_decompress_safe((char*)compressedData.data(), (char*)uncompressedData->data(), compressedData.size(), header->uncompressedBlocksInfoSize());

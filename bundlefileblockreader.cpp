@@ -59,11 +59,26 @@ VRCE::BinaryReader VRCE::BundleFiles::BundleFileBlockReader::readEntry(const VRC
 
                 switch (compressType) {
                 case BundleFiles::CompressionType::Lzma:
-                    SevenZipHelper::DecompressLZMA(m_reader, block.compressedSize(), *m_cachedBlock);
+                    if (!SevenZipHelper::DecompressLZMA(m_reader, block.compressedSize(), *m_cachedBlock)) {
+                        throw std::exception("Failed to decompress LZMA Stream");
+                    }
                     break;
                 case BundleFiles::CompressionType::Lz4:
                 case BundleFiles::CompressionType::Lz4HC:
+                {/*
+                    std::vector<std::uint8_t> compressedData(block.compressedSize());
+
+                    m_reader.readInto(compressedData);
+
+                    // DeCompress (TODO: loop until all is read) ((POSSIBLE BUG))
+                    int result = LZ4_decompress_safe((char*)compressedData.data(), (char*)m_cachedBlock->data(), block.compressedSize(), block.uncompressedSize());
+
+                    if (result != block.uncompressedSize()) {
+                        throw ""; // Decompression failed...
+                    }
+*/
                     break;
+                }
                 default:
                     throw ""; // NotImplementedException($"Bundle compression '{compressType}' isn't supported");
                 }

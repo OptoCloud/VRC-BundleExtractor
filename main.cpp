@@ -8,7 +8,11 @@
 
 int main()
 {
-    auto scheme = VRCE::BundleFileScheme::ReadScheme("avatar.vrca");
+    try {
+        auto scheme = VRCE::BundleFileScheme::ReadScheme("avatar.vrca");
+    }  catch (std::exception& ex) {
+        std::cout << "Exception:" << ex.what() << std::endl;
+    }
 
     return 0;
 }
